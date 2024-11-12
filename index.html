@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Show and hide layers</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js"></script>
+<script src="https://d3js.org/d3.v5.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .mapboxgl-popup-content {
+        min-width: 400px;
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        height:360px;
+        overflow:auto;
+    }
+</style>
+   
+<style>
+  #menu {
+        background:  #404040;
+        position: absolute;
+        z-index: 1;
+        top: 50px;
+        left: 10px;
+       
+        width: 120px;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    #menu a {
+        font-size: 13px;
+        color: #ffffff;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 8px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center; 
+    }
+
+    #menu a:last-child {
+        border: none;
+    }
+
+    #menu a:hover {
+        background-color: #757272;
+        color: #404040;
+    }
+
+    #menu a.active {
+        background-color: #3887be;
+        color: #ffffff;
+    }
+
+    #menu a.active:hover {
+        background: #3074a4;
+    }
+    p { font-size: 13px;
+        color: #404040;
+        background-color: #ffffff;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 10px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center;
+        
+    }
+</style>
+
+<style>
+   #newmenu {
+        background:  #404040;
+        position: absolute;
+        z-index: 1;
+        top: 10px;
+        right: 10px;
+        width: 120px;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    #newmenu a {
+        font-size: 13px;
+        color: #ffffff;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 5px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center; 
+    }
+
+    #newmenu a:last-child {
+        border: none;
+    }
+
+    #newmenu a:hover {
+        background-color: #757272;
+        color: #404040;
+    }
+
+    #newmenu a.active {
+        background-color: #3887be;
+        color: #ffffff;
+    }
+
+    #newmenu a.active:hover {
+        background: #3074a4;
+    }
+    p { font-size: 13px;
+        color: #404040;
+        background-color: #ffffff;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 10px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center;
+        
+    }
+</style>
+<style>
+    .legend {
+        background-color: #fff;
+        color: #404040;
+        bottom: 20px;
+        font-size: 13px;
+        padding: 5px;
+        position: absolute;
+        right: 10px;
+        z-index: 1;
+        font-family: 'Open Sans', sans-serif;
+    }
+     
+    .legend div span {
+        font-size: 12px;
+        border:1px solid gray;   
+        display: inline-block;
+        height: 10px;
+        margin-right: 5px;
+        width: 10px;
+    }
+</style>
+<style>
+    .popup {
+        position: absolute;
+        z-index: 1;
+        top: 10px;
+        left: 10px;
+        background-color: white;
+        font-family: 'Open Sans', sans-serif;
+        padding: 10px;
+        color: #404040;
+        font-size:13px;
+        display: inline-block;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    /* The actual popup */
+    .popup .popuptext {
+        visibility: hidden;
+        background-color:#3074a4;;
+        color: white;
+        padding: 10px;
+        position: absolute;
+        width: 320px;
+        z-index: 1;
+        top:0px;
+        left: 170px;
+    }
+
+    /* Toggle this class - hide and show the popup */
+    .popup .show {
+        visibility: visible;
+        -webkit-animation: fadeIn 1s;
+        animation: fadeIn 1s;
+    }
+
+    /* Add animation (fade in the popup) */
+    @-webkit-keyframes fadeIn {
+        from {opacity: 0;} 
+        to {opacity: 1;}
+    }
+
+    @keyframes fadeIn {
+        from {opacity: 0;}
+        to {opacity:1 ;}
+    } 
+</style>
+
+<div id="menu"><p>Category</p></div> 
+<div class="popup" onclick="myFunction()">How does this map work?
+    <span class="popuptext" id="myPopup">
+        - Year and Category can be selected for filtering.<br>
+        - When zoomed out, octagons show cluster of facilities.<br>
+        - Zoom in till circles are visible to find exact location.<br>
+        - More information can be found by clicking the circle/octagon.</span>
+</div>
+<div id="newmenu"><p>Select year</p></div>
+
+<div id="map"></div>
+<div id="code-legend" class="legend">
+    <div style="text-align: center;">Category</div>
+    <div style="padding-top: 10px;"><span style="background-color: #8EBAE5"></span>Power plant(unspecified)</div>
+    <div><span style="background-color: #57AB27"></span>NGCC power plant</div>
+    <div><span style="background-color: #A11035"></span>IGCC power plant</div>
+    <div><span style="background-color: #00549F"></span>Coal power plant</div>
+    <div><span style="background-color: #FFED00"></span>Refineries and steam cracker</div>
+    <div><span style="background-color: #0098A1"></span>Steel and Iron</div>
+    <div><span style="background-color: #006165"></span>Cement</div>
+    <div><span style="background-color: #BDCD00"></span>Pulp and Paper</div>
+    <div><span style="background-color: #F6A800"></span>Ammonia</div>
+    <div><span style="background-color: #7A6FAC"></span>Hydrogen plant</div>
+    <div><span style="background-color: red"></span>Ethylene Oxide</div>
+    <div><span style="background-color: white"></span>Other</div>
+    </div>
+   
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoiY28yYXRsYXMiLCJhIjoiY2xibTh3NWFtMGYxOTNwbGN6aTQzeWkxZyJ9.dyiJRXEhZa-h2fsPlswPlA';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [9, 50],
+        zoom: 3,
+        minZoom: 3
+    });
+     // When the user clicks on <div> class popup, open the popup
+    function myFunction() {
+    var popup = document.getElementById("myPopup");
+    popup.classList.toggle("show");
+    }
+ 
+    map.on('load', () => { 
+       
+        
+        map.addLayer({                  //To change the color of water areas to black (easy contrast between water and land)
+            'id': 'water-line-layer',
+            'source': 'composite',
+            'source-layer': 'water',
+            'type': 'fill',
+            'paint': {'fill-color': 'black'}
+        });
+        
+        map.addSource('cluster_emi', {  //Add the source file --> clustered data one
+            'type': 'geojson',
+            'data': 'output_clustered.geojson'
+        });
+        
+        map.addSource('aspts', {    //Add the source file --> without the clustered data
+           'type': 'geojson',
+           'data': 'output.geojson'
+        });
+
+        map.addLayer({              //Add the clustered data layer with colors for each category and height interpolation for this layer
+                    'id': 'cluster_layer1',
+                    'type': 'fill-extrusion',
+                    'source': 'cluster_emi',
+                    "maxzoom":6,
+                    'layout': {'visibility': 'visible'},
+                    "paint": {
+                        "fill-extrusion-color": ['match', ['get', 'Category'],
+                                                    'Power plant(unspecified)', "#8EBAE5",
+                                                    'Refineries and steam cracker', "#FFED00",
+                                                    'Steel and Iron', "#0098A1",
+                                                    'Cement', "#006165",
+                                                    'Pulp and Paper', "#BDCD00",
+                                                    'Ammonia', "#F6A800",
+                                                    'NGCC power plant',"#57AB27",
+                                                    'IGCC power plant',"#A11035",
+                                                    'Coal power plant',"#00549F",
+                                                    'Ethylene Oxide',"red",
+                                                    'Hydrogen plant',"#7A6FAC",
+                                                    'Other',"white",
+                                                    "black"],
+
+                        "fill-extrusion-height": ['interpolate',['linear'],['zoom'],
+                                                    3,0,
+                                                    4,['/', ['get', 'height_17'], 20500],
+                                                    5.5,['/', ['get', 'height_17'], 60600],
+                                                    6,['/', ['get', 'height_17'], 303500],],},});
+
+//Add the clustered data layer with colors for each category and height interpolation for this layer(which is less than previous 
+//layer because as you zoom in the map, the height needs to be adjusted so that bar height does not go out of the screen)
+        map.addLayer({                      
+                    'id': 'cluster_layer2',
+                    'type': 'fill-extrusion',
+                    'source': 'cluster_emi',
+                    "minzoom":6,
+                    "maxzoom":8,
+                    'layout': {'visibility': 'visible'},
+                    "paint": {
+                        "fill-extrusion-color": ['match', ['get', 'Category'],
+                        'Power plant(unspecified)', "#8EBAE5",
+                                                    'Refineries and steam cracker', "#FFED00",
+                                                    'Steel and Iron', "#0098A1",
+                                                    'Cement', "#006165",
+                                                    'Pulp and Paper', "#BDCD00",
+                                                    'Ammonia', "#F6A800",
+                                                    'NGCC power plant',"#57AB27",
+                                                    'IGCC power plant',"#A11035",
+                                                    'Coal power plant',"#00549F",
+                                                    'Ethylene Oxide',"red",
+                                                    'Hydrogen plant',"#7A6FAC",
+                                                    'Other',"white",
+                                                    "black"],
+                        "fill-extrusion-height":['interpolate',['linear'],['zoom'],
+                                                6.01,['/', ['get', 'height_17'], 303500],
+                                                8,['/', ['get', 'height_17'], 1213500],],}, });
+
+//Add the last layer with each individual facility as it's own point (without height) for detailed analysis
+        map.addLayer({
+                    'id': 'layer3',
+                    'type': 'circle',
+                    "minzoom":8,
+                    'source': 'aspts',
+                    'paint': {
+                        'circle-color': ['match', ['get', 'Category'],
+                        'Power plant(unspecified)', "#8EBAE5",
+                                                    'Refineries and steam cracker', "#FFED00",
+                                                    'Steel and Iron', "#0098A1",
+                                                    'Cement', "#006165",
+                                                    'Pulp and Paper', "#BDCD00",
+                                                    'Ammonia', "#F6A800",
+                                                    'NGCC power plant',"#57AB27",
+                                                    'IGCC power plant',"#A11035",
+                                                    'Coal power plant',"#00549F",
+                                                    'Ethylene Oxide',"red",
+                                                    'Hydrogen plant',"#7A6FAC",
+                                                    'Other',"white",
+                                            "black"],
+                        'circle-radius': 11,  }});
+
+        //the options to filter categories in the map
+        const toggleableLayerIds = ['select/unselect all','Power plant(unspecified)','NGCC power plant','IGCC power plant','Coal power plant', 'Refineries and steam cracker', 'Steel and Iron', 'Cement','Pulp and Paper','Ammonia','Hydrogen plant','Ethylene Oxide','Other'];
+        currently_active = toggleableLayerIds
+        
+        function popupFunction(e,mlayer) { //function for popup window
+            //e returns the details of all the failities under the clicked point 
+            all_features = e.features
+            let description =new Object();
+            string = ""
+            sum07 = sum08 = sum09 = sum10 = sum11 = sum12= sum13 =sum14 =sum15 =sum16= sum17 = 0
+            const coordinates = e.features[0].geometry.coordinates.slice();
+                   
+            for ( var i=0; i<all_features.length ;i++){    //get all the facilities under the clicked point
+            
+            
+                if (e.features[i].properties.Concentration=="") // the concentration variable is empty in some cases, replace it with "n/a" in popup
+                    con = "n/a"
+                else
+                    con = e.features[i].properties.Concentration
+
+                if (all_features.length==1)         // if only one facility under the clicked point then don't give numbers
+                    j="&emsp;"
+                else
+                    j=i+1+". "                      // if more than one facility, then give numbers
+                string = string + j + "<b>"+"Name: " +"</b>"+ e.features[i].properties.FacilityName +"<br>"+"<b>"+"&emsp;Category: " 
+                +"</b>"+ e.features[i].properties.Category +"<br>"+"<b>"+"&emsp;Concentration: " 
+                +"</b>"+ con+ "<br>";               // string to show all the details for the facilities 
+
+                sum07 = sum07 + e.features[i].properties[2007]      // store sum of all the emissions in each year for every facility for line chart
+                sum08 = sum08 + e.features[i].properties[2008]
+                sum09 = sum09 + e.features[i].properties[2009]
+                sum10 = sum10 + e.features[i].properties[2010]
+                sum11 = sum11 + e.features[i].properties[2011]
+                sum12 = sum12 + e.features[i].properties[2012]
+                sum13 = sum13 + e.features[i].properties[2013]
+                sum14 = sum14 + e.features[i].properties[2014]
+                sum15 = sum15 + e.features[i].properties[2015]
+                sum16 = sum16 + e.features[i].properties[2016]
+                sum17 = sum17 + e.features[i].properties[2017]
+                
+            }
+            
+            var coor =[]
+             // geojson file contains 9 values for long and lat (to make octagon), therefore it needs to be averaged except for the last layer "poin"
+            if (mlayer=='layer3')
+            {
+                coor = coordinates
+            } 
+            else{
+                const coorlang = (coordinates[0][0][0] +coordinates[0][1][0] +coordinates[0][2][0] +coordinates[0][3][0])/4; 
+                const coorlat = (coordinates[0][0][1] +coordinates[0][1][1] +coordinates[0][2][1] +coordinates[0][3][1])/4;
+                coor = [coorlang,coorlat]
+            }
+
+                // Ensure that if the map is zoomed out such that multiple
+                // copies of the feature are visible, the popup appears
+                // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coor[0]) > 180) {
+                coor[0] += e.lngLat.lng > coor[0] ? 360 : -360;
+            }
+
+            new mapboxgl.Popup()
+                .setLngLat(coor)
+                .setHTML(('<div id="smallcontainer"></div>')) 
+                .addTo(map);
+
+                var get = document.getElementById('smallcontainer');
+
+                    get.innerHTML += string+" "; //add string from above
+                    
+                    var margin = {top: 10, right: 30, bottom: 30, left: 60},
+                    width = 400 - margin.left - margin.right,
+                    height = 300 - margin.top - margin.bottom;
+
+                    // make container
+                    var svg = d3.select("#smallcontainer")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")");
+
+                    //Data for linechart
+
+                    var data = [
+                                {date:2007,value: sum07},
+                                {date:2008,value: sum08}, 
+                                {date:2009,value: sum09}, 
+                                {date:2010,value: sum10},
+                                {date:2011,value: sum11},
+                                {date:2012,value: sum12},
+                                {date:2013,value: sum13},
+                                {date:2014,value: sum14},
+                                {date:2015,value: sum15},
+                                {date:2016,value: sum16},
+                                {date:2017,value: sum17},
+                            ]
+
+                    // Add X axis --> it is a date format
+                    var x = d3.scaleTime()
+                    .domain(d3.extent(data, function(d) {  return new Date(parseInt(d.date),0);}))
+                    .range([ 0, width ]);
+                    svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x));
+
+                    // Add Y axis
+                    var y = d3.scaleLinear()
+                    .domain([0, d3.max(data, function(d) { return +d.value/1000000; })])
+                    .range([ height, 0 ]);
+
+                    var yAxis = d3.axisLeft(y)
+                    .tickFormat(d3.format(""));     //remove comma from Y-axis values (2,000 -> 2000)
+
+                    svg.append("g")
+                    .call(yAxis);
+
+
+                    // X axis label
+                    svg.append("text")
+                    .attr("text-anchor", "end")
+                    .attr("x", width/2)
+                    .attr("y", height + margin.top + 20)
+                    .text("Year");
+
+                    // Y axis label
+                    svg.append("text")
+                    .attr("text-anchor", "end")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", -margin.left+10)
+                    .attr("x", -margin.top-70)
+                    .text("CO2-Emissions ( Mt/year )")
+                    
+
+                    // Add the line
+                    svg.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", "steelblue")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d3.line()
+                        .x(function(d) { return x(new Date(parseInt(d.date),0)) })
+                        .y(function(d) { return y(d.value/1000000) })
+                        )
+
+        }
+
+        function setfilterfunc(layer_name){
+            map.setFilter(layer_name,                //filter facilities with only currently active categories
+                ["in", ["get", "Category"], ["literal", currently_active]
+                ]);
+        }
+
+        function popupclick(layer_name){ // call this function when a facility is clicked 
+        // call the popup function when clicked on a facility for the layer "layer_name"
+        map.on('click', layer_name, (e) => {  
+            popupFunction(e,layer_name)
+        });
+        // Change mouse pointer when it is over clickable entity.
+        map.on('mouseenter', layer_name, () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', layer_name, () => {
+            map.getCanvas().style.cursor = '';
+        });}
+        
+        // Set up the corresponding toggle button for each category
+        var toggleableLayerIds2 = ['select/unselect all','Power plant(unspecified)','NGCC power plant','IGCC power plant','Coal power plant', 'Refineries and steam cracker', 'Steel and Iron', 'Cement','Pulp and Paper','Ammonia','Hydrogen plant','Ethylene Oxide','Other'];
+        for (const id of toggleableLayerIds) {
+            
+            const link = document.createElement('a');
+            link.id = id;
+            link.href = '#';
+            link.textContent = id;
+            link.className = 'active';
+          
+            
+
+            // Show or hide category when the toggle is clicked.
+            link.onclick = function (e) {
+                const clickedLayer = this.textContent;
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (this.id == 'select/unselect all'){
+                    if (this.className == 'active'){
+                        for (const id2 of toggleableLayerIds2) {
+                            link2 = document.getElementById(id2);
+                            link2.className =''
+                        }currently_active.length=0}
+                    else{ for (const id2 of toggleableLayerIds2) {
+                            link2 = document.getElementById(id2);
+                            link2.className ='active'
+                            currently_active.push(id2)
+                        }
+                        
+                    }
+                }
+                else{
+                if (this.className == 'active'){        // if it's already active, click should deactivate the category
+                    this.className = '';
+                    for( var i = 0; i < currently_active.length; i++){     
+                        if ( currently_active[i] === clickedLayer) { 
+                            currently_active.splice(i, 1); //remove one element at index i
+                        }
+                    }
+                }
+                else {                                  // if it's inactive, click should activate the category
+                    this.className = 'active';
+                    currently_active.push(clickedLayer)
+                }
+                }
+                setfilterfunc("cluster_layer1") // call the filter function
+                setfilterfunc("cluster_layer2")
+                setfilterfunc("layer3")
+               
+            };
+            
+            const layers = document.getElementById('menu');
+            layers.appendChild(link);
+        }
+
+        //function for changing the height of bars according to the year selected
+        function selectyear(year){
+            console.log(year)
+            string = ""
+            string = string.concat("height_",(year.slice(-2)))
+            
+            {map.setPaintProperty('cluster_layer1',"fill-extrusion-height",['interpolate',['linear'],['zoom'],
+                                                    3,0,
+                                                    4,['/', ['get', string], 20500],
+                                                    5.5,['/', ['get',string], 60600],
+                                                    6,['/', ['get', string], 303500],]);
+            map.setPaintProperty('cluster_layer2',"fill-extrusion-height", ['interpolate',['linear'],['zoom'],
+                                                    6.01,['/', ['get', string], 303500],
+                                                    8,['/', ['get',string], 1213500],]);}
+
+        }
+
+        //toggables for "select year"
+        const years = ['2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017']
+        for (const year of years) {
+            
+            const link = document.createElement('a');
+            link.id = year;
+            link.href = '#';
+            link.textContent = year;
+
+            //default year selected is 2017
+            if (year == "2017") 
+                {link.className = 'active';
+                }
+            else
+                link.className =''
+
+            const layers = document.getElementById('newmenu');
+            layers.appendChild(link);
+            
+
+            // select the year
+            link.onclick = function (e) {
+                
+                selectyear(this.id)         //function call for adjusting the height 
+                e.preventDefault();
+                e.stopPropagation();
+                for (const year of years) {
+                    link2 = document.getElementById(year);
+                    link2.className =''
+                }
+                if (this.className == ''){        
+                    this.className = 'active';
+
+                }   
+            };   
+        }
+
+        popupclick("cluster_layer1")
+        popupclick("cluster_layer2")
+        popupclick("layer3")
+       
+    });
+    
+</script>
+
+</body>
+</html>

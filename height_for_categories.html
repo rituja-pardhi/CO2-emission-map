@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Show and hide layers</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js"></script>
+<script src="https://d3js.org/d3.v5.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+    <style>
+        .mapboxgl-popup-content {
+            min-width: 380px;
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            height:360px;
+            overflow:auto;
+        }
+    </style>
+   
+<style>
+    #menu {
+        background: #fff;
+        position: absolute;
+        z-index: 1;
+        top: 10px;
+        left: 10px;
+        border-radius: 3px;
+        width: 120px;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    #menu a {
+        font-size: 13px;
+        color: #404040;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 10px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center;
+    }
+
+    #menu a:last-child {
+        border: none;
+    }
+
+    #menu a:hover {
+        background-color: #f8f8f8;
+        color: #404040;
+    }
+
+    #menu a.active {
+        background-color: #3887be;
+        color: #ffffff;
+    }
+
+    #menu a.active:hover {
+        background: #3074a4;
+    }
+    p { font-size: 13px;
+        color: #404040;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 10px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        text-align: center;
+    }
+    </style>
+<style>
+    #newmenu {
+        background: #fff;
+        position: absolute;
+        z-index: 1;
+        top: 10px;
+        right: 10px;
+        border-radius: 3px;
+        
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    
+    #input[type=radio] {
+    display: block;
+    margin: 0 auto;
+}
+label {
+    display: block;
+}
+</style>
+<style>
+    .legend {
+    background-color: #fff;
+    border-radius: 3px;
+    bottom: 30px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    position: absolute;
+    right: 10px;
+    z-index: 1;
+    }
+     
+    .legend h4 {
+    margin: 0 0 10px;
+    }
+     
+    .legend div span {
+    border-radius: 50%;
+    border:1px solid gray;   
+    display: inline-block;
+    height: 10px;
+    margin-right: 5px;
+    width: 10px;
+    }
+    </style>
+    <style>
+.popup {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  left: 140px;
+  background-color: white;
+  border-radius: 3px;
+  padding: 10px;
+  color:#3074a4;
+  font-size:medium;
+  display: inline-block;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* The actual popup */
+.popup .popuptext {
+  visibility: hidden;
+  background-color:#3074a4;;
+  color: white;
+  padding: 10px;
+  position: absolute;
+  z-index: 1;
+  top: 40px;
+  left: 1px;
+}
+
+
+
+/* Toggle this class - hide and show the popup */
+.popup .show {
+  visibility: visible;
+  -webkit-animation: fadeIn 1s;
+  animation: fadeIn 1s;
+}
+
+/* Add animation (fade in the popup) */
+@-webkit-keyframes fadeIn {
+  from {opacity: 0;} 
+  to {opacity: 1;}
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity:1 ;}
+} 
+
+    </style>
+
+<div id="menu"><p>Category</p></div>
+
+<div class="popup" onclick="myFunction()">How does this map work?
+    <span class="popuptext" id="myPopup">Zoom in till you see circle to find exact location of the facility</span>
+  </div>
+<div id="newmenu"><p>Select year</p>
+
+    <label><input type="radio" name="radioset" />2007</label>
+    <label><input type="radio" name="radioset" />2008</label>
+    <label><input type="radio" name="radioset" />2009</label>
+    <label><input type="radio" name="radioset" />2010</label>
+    <label><input type="radio" name="radioset" />2011</label>
+    <label><input type="radio" name="radioset" />2012</label>
+    <label><input type="radio" name="radioset" />2013</label>
+    <label><input type="radio" name="radioset" />2014</label>
+    <label><input type="radio" name="radioset" />2015</label>
+    <label><input type="radio" name="radioset" />2016</label>
+    <label><input type="radio" name="radioset" />2017</label>
+
+
+</div>
+<div id="map"></div>
+<div id="code-legend" class="legend">
+    <h4>Category</h4>
+    <div><span style="background-color: red"></span>Power plant(unspecified)</div>
+    <div><span style="background-color: maroon"></span>NGCC power plant</div>
+    <div><span style="background-color: burlywood"></span>IGCC power plant</div>
+    <div><span style="background-color: yellowgreen"></span>Coal power plant</div>
+    <div><span style="background-color: orange"></span>Refineries and steam cracker</div>
+    <div><span style="background-color: yellow"></span>Steel and Iron</div>
+    <div><span style="background-color: green"></span>Cement</div>
+    <div><span style="background-color: indigo"></span>Pulp and Paper</div>
+    <div><span style="background-color: violet"></span>Ammonia</div>
+    <div><span style="background-color: cornflowerblue"></span>Hydrogen plant</div>
+    <div><span style="background-color: palevioletred"></span>Ethylene Oxide</div>
+    <div><span style="background-color: white"></span>Other</div>
+    
+    </div>
+   
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoiY28yYXRsYXMiLCJhIjoiY2xibTh3NWFtMGYxOTNwbGN6aTQzeWkxZyJ9.dyiJRXEhZa-h2fsPlswPlA';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [9, 50],
+      zoom: 3,
+      minZoom: 3
+    });
+     // When the user clicks on <div> class popup, open the popup
+    function myFunction() {
+    var popup = document.getElementById("myPopup");
+    popup.classList.toggle("show");
+    }
+ 
+    map.on('load', () => { 
+        
+        map.addLayer({                  //To change the color of water areas to black (easy contrast between water and land)
+            'id': 'water-line-layer',
+            'source': 'composite',
+            'source-layer': 'water',
+            'type': 'fill',
+            'minzoom': 0,
+            'paint': {
+                'fill-color': 'black'
+            }
+        });
+        
+        map.addSource('cluster_emi', {  //Add the source file --> clustered data one
+            'type': 'geojson',
+            'data': 'output_clustered.geojson'
+        });
+        
+
+        map.addSource('aspts', {    //Add the source file --> without the clustered data
+           
+           'type': 'geojson',
+           'data': 'output.geojson'
+       });
+
+       var gj = {
+            "name":"NewFeatureType",
+            "type":"FeatureCollection",
+            "features":[]
+        };
+      
+        map.addSource('gj', {       //Add the source file --> with the adjusted height
+           
+           'type': 'geojson',
+           'data': gj
+       });
+
+       map.addLayer({                       //Add the layer with adjusted height
+                    'id': 'cluster_new',
+                    'type': 'fill-extrusion',
+                    'source': 'gj',
+                    "maxzoom":6,
+                    'layout': {'visibility': 'visible'},
+                    "paint": {
+                        "fill-extrusion-color": ['match', ['get', 'Category'],
+                                                    'Power plant(unspecified)', "red",
+                                                    'Refineries and steam cracker', "orange",
+                                                    'Steel and Iron', "yellow",
+                                                    'Cement', "green",
+                                                    'Pulp and Paper', "indigo",
+                                                    'Ammonia', "violet",
+                                                    'NGCC power plant',"maroon",
+                                                    'IGCC power plant',"burlywood",
+                                                    'Coal power plant',"yellowgreen",
+                                                    'Ethylene Oxide',"palevioletred",
+                                                    'Hydrogen plant',"cornflowerblue",
+                                                    'Other',"white",
+                                                    "black"],
+
+                        "fill-extrusion-height": ['interpolate',['linear'],['zoom'],
+                                                    3,0,
+                                                    4,['/', ['get', 'heightm'], 20500],
+                                                    5.5,['/', ['get', 'heightm'], 60600],
+                                                    6,['/', ['get', 'heightm'], 303500],],},});
+
+     
+        map.addLayer({                      //Add the clustered data layer with colors for each category and height interpolation for this layer
+                    'id': 'cluster',
+                    'type': 'fill-extrusion',
+                    'source': 'cluster_emi',
+                    "maxzoom":6,
+                    'layout': {'visibility': 'visible'},
+                    "paint": {
+                        "fill-extrusion-color": ['match', ['get', 'Category'],
+                                                    'Power plant(unspecified)', "red",
+                                                    'Refineries and steam cracker', "orange",
+                                                    'Steel and Iron', "yellow",
+                                                    'Cement', "green",
+                                                    'Pulp and Paper', "indigo",
+                                                    'Ammonia', "violet",
+                                                    'NGCC power plant',"maroon",
+                                                    'IGCC power plant',"burlywood",
+                                                    'Coal power plant',"yellowgreen",
+                                                    'Ethylene Oxide',"palevioletred",
+                                                    'Hydrogen plant',"cornflowerblue",
+                                                    'Other',"white",
+                                                    "black"],
+
+                        "fill-extrusion-height": ['interpolate',['linear'],['zoom'],
+                                                    3,0,
+                                                    4,['/', ['get', '2017'], 20500],
+                                                    5.5,['/', ['get', '2017'], 60600],
+                                                    6,['/', ['get', '2017'], 303500],],},});
+
+//Add the clustered data layer with colors for each category and height interpolation for this layer(which is less than previous 
+//layer because as you zoom in the map, the height needs to be adjusted so that bar height does not go out of the screen)
+        map.addLayer({                      
+                    'id': 'nocluster',
+                    'type': 'fill-extrusion',
+                    'source': 'cluster_emi',
+                    "minzoom":6,
+                    "maxzoom":7.5,
+                    'layout': {'visibility': 'visible'},
+                    "paint": {
+                        "fill-extrusion-color": ['match', ['get', 'Category'],
+                                                    'Power plant(unspecified)', "red",
+                                                    'Refineries and steam cracker', "orange",
+                                                    'Steel and Iron', "yellow",
+                                                    'Cement', "green",
+                                                    'Pulp and Paper', "indigo",
+                                                    'Ammonia', "violet",
+                                                    'NGCC power plant',"maroon",
+                                                    'IGCC power plant',"burlywood",
+                                                    'Coal power plant',"yellowgreen",
+                                                    'Ethylene Oxide',"palevioletred",
+                                                    'Hydrogen plant',"cornflowerblue",
+                                                    'Other',"white",
+                                                    "black"],
+                        "fill-extrusion-height":['interpolate',['linear'],['zoom'],
+                                                6.01,['/', ['get', '2017'], 303500],
+                                                7.5,['/', ['get', '2017'], 1213500],],}, });
+
+//Add the last layer with each individual facility as it's own point (without height) for detailed analysis
+        map.addLayer({
+                    'id': 'poin',
+                    'type': 'circle',
+                    "minzoom":7.5,
+                    'source': 'aspts',
+                    'paint': {
+                        'circle-color': ['match', ['get', 'Category'],
+                                            'Power plant(unspecified)', "red",
+                                            'Refineries and steam cracker', "orange",
+                                            'Steel and Iron', "yellow",
+                                            'Cement', "green",
+                                            'Pulp and Paper', "indigo",
+                                            'Ammonia', "violet",
+                                            'NGCC power plant',"maroon",
+                                            'IGCC power plant',"burlywood",
+                                            'Coal power plant',"yellowgreen",
+                                            'Ethylene Oxide',"palevioletred",
+                                            'Hydrogen plant',"cornflowerblue",
+                                            "Other","white",
+                                            "black"],
+                        'circle-radius': 8,  }});
+
+        //the options to filter categories in the map
+        const toggleableLayerIds = ['Power plant(unspecified)','NGCC power plant','IGCC power plant','Coal power plant', 'Refineries and steam cracker', 'Steel and Iron', 'Cement','Pulp and Paper','Ammonia','Hydrogen plant','Ethylene Oxide','Other'];
+        currently_active = toggleableLayerIds    
+        
+        // Set up the corresponding toggle button for each layer.
+        for (const id of toggleableLayerIds) {
+            
+            const link = document.createElement('a');
+            link.id = id;
+            link.href = '#';
+            link.textContent = id;
+            link.className = 'active';
+
+            // Show or hide category when the toggle is clicked.
+            link.onclick = function (e) {
+                const clickedLayer = this.textContent;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (this.className == 'active'){        // if it's already active, click should deactivate the category
+                    this.className = '';
+                    for( var i = 0; i < currently_active.length; i++){     
+                        if ( currently_active[i] === clickedLayer) { 
+                            currently_active.splice(i, 1); //remove one element at index i
+                        }
+                    }
+                }
+                else {                                  // if it's inactive, click should activate the category
+                    this.className = 'active';
+                    currently_active.push(clickedLayer)
+                }
+                
+                map.setFilter("cluster",                //filter facilities with only currently active categories
+                ["in", ["get", "Category"], ["literal", currently_active]
+                ]);
+
+                map.setFilter("nocluster",              //filter facilities with only currently active categories
+                ["in", ["get", "Category"], ["literal", currently_active]
+                ]);
+                
+                map.setFilter("poin",                   //filter facilities with only currently active categories
+                ["in", ["get", "Category"], ["literal", currently_active]
+                ]);
+                
+                var featuresm = map.querySourceFeatures('cluster_emi',{layers: ['cluster'],filter: ["in", ["get", "Category"], ["literal", currently_active]
+                ]}); //fetch all the facilities shown at that moment in the map from the source cluster_emi
+                
+                function getUniqueFeatures(features, comparatorProperty) { // above function returns multiple copies of facilities, therefore this function is used to remove duplicate copies
+                    const uniqueIds = new Set();
+                    const uniqueFeatures = [];
+                        for (const feature of features) {
+                        const id = feature.properties[comparatorProperty];
+                        n = feature.geometry.coordinates[0].length;
+                            console.log(n)
+                        if(n === 9){                            // 
+                            if (!uniqueIds.has(id)) {
+                            uniqueIds.add(id);
+                            uniqueFeatures.push(feature);
+                            }
+                        }}
+                    return uniqueFeatures;
+                }
+                const uniqueFeatures = getUniqueFeatures(featuresm, 'FacilityID');
+                console.log(uniqueFeatures)
+                
+                active_coords = []
+                fidm = []
+                heightm = []
+                for (var i = 0; i < uniqueFeatures.length; i++) {
+                    
+                    const fid = uniqueFeatures[i].properties.FacilityID;
+                    //console.log(fid)
+                    const coordinates = uniqueFeatures[i].geometry.coordinates.slice();
+                    const coorlang = (coordinates[0][0][0] +coordinates[0][1][0] +coordinates[0][2][0] +coordinates[0][3][0])/4;
+                    const coorlat = (coordinates[0][0][1] +coordinates[0][1][1] +coordinates[0][2][1] +coordinates[0][3][1])/4;
+                    const height = uniqueFeatures[i].properties[2017];
+                    const name = uniqueFeatures[i].properties.FacilityName;
+                    const code = uniqueFeatures[i].properties.MainIAActivityCode;
+                    const cluster = uniqueFeatures[i].properties.cluster;
+                    const Category = uniqueFeatures[i].properties.Category;
+                    const coor = [coorlang,coorlat,height,fid,name,code,cluster,Category]
+                    
+                    active_coords.push(coor)
+                }
+                var gj = {
+                    "name":"NewFeatureType",
+                    "type":"FeatureCollection",
+                    "features":[]
+                };
+                //console.log(uniqueFeatures)
+                        
+                for (var m = 0; m < active_coords.length; m++) {
+                    const coordinates = uniqueFeatures[m].geometry.coordinates.slice();
+                    for (var n = m+1; n < active_coords.length; n++) {
+                            if (active_coords[m][0] === active_coords[n][0] && active_coords[m][1] === active_coords[n][1])
+                            {
+                                active_coords[m][2] = active_coords[m][2] + active_coords[n][2]
+                                   
+                            }
+                            
+                    }
+                    gj.features.push({"type": "Feature", "properties": {"FacilityID":active_coords[m][3],"heightm":active_coords[m][2],"MainIAActivityCode":active_coords[m][5],"cluster":active_coords[m][6],},"geometry": {"type": "Polygon","coordinates": coordinates}})
+                    fidm.push(active_coords[m][3])
+                    heightm.push(active_coords[m][2])
+                    //console.log(active_coords[m][3],active_coords[m][2])
+                    
+                }
+                
+                const geojsonSource = map.getSource('gj');
+                geojsonSource.setData(gj)
+
+                
+
+            };
+            
+            
+            const layers = document.getElementById('menu');
+            layers.appendChild(link);
+        }
+
+        // now starts the code for popup window
+        map.on('click', 'cluster', (e) => { //e returns the details of all the failities under the clicked point
+           
+            all_features = e.features
+            let description =new Object();
+            string = ""
+            sum07 = sum08 = sum09 = sum10 = sum11 = sum12= sum13 =sum14 =sum15 =sum16= sum17 = 0
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            filters = map.getFilter('cluster')
+            if(filters!=undefined){
+            activfilter = filters[2][1]
+            
+            for ( var i=0; i<all_features.length ;i++){
+                
+                if(activfilter.includes(e.features[i].properties.Category)){
+                    
+                    if (e.features[i].properties.Concentration=="")
+                        con = "n/a"
+                    else
+                        con = e.features[i].properties.Concentration
+                        
+                    if (all_features.length==1)
+                        j="&emsp;"
+                    else
+                        j=i+1+". "
+                    string = string + j + "<b>"+"Name: " +"</b>"+ e.features[i].properties.FacilityName +"<br>"+"<b>"+"&emsp;Category: " 
+                    +"</b>"+ e.features[i].properties.Category +"<br>"+"<b>"+"&emsp;Concentration: " 
+                    +"</b>"+ con+ "<br>"; 
+                    sum07 = sum07 + e.features[i].properties[2007]
+                    sum08 = sum08 + e.features[i].properties[2008]
+                    sum09 = sum09 + e.features[i].properties[2009]
+                    sum10 = sum10 + e.features[i].properties[2010]
+                    sum11 = sum11 + e.features[i].properties[2011]
+                    sum12 = sum12 + e.features[i].properties[2012]
+                    sum13 = sum13 + e.features[i].properties[2013]
+                    sum14 = sum14 + e.features[i].properties[2014]
+                    sum15 = sum15 + e.features[i].properties[2015]
+                    sum16 = sum16 + e.features[i].properties[2016]
+                    sum17 = sum17 + e.features[i].properties[2017]
+                }
+                    
+                
+            }}
+            else{
+                for ( var i=0; i<all_features.length ;i++){    //get all the facilities under the clicked point
+                
+                
+                    if (e.features[i].properties.Concentration=="") // the concentration variable is empty in some cases, replace it with "n/a" in popup
+                        con = "n/a"
+                    else
+                        con = e.features[i].properties.Concentration
+
+                    if (all_features.length==1)         // if only one facility under the clicked point then don't give numbers
+                        j="&emsp;"
+                    else
+                        j=i+1+". "                      // if more than one facility, then give numbers
+                    string = string + j + "<b>"+"Name: " +"</b>"+ e.features[i].properties.FacilityName +"<br>"+"<b>"+"&emsp;Category: " 
+                    +"</b>"+ e.features[i].properties.Category +"<br>"+"<b>"+"&emsp;Concentration: " 
+                    +"</b>"+ con+ "<br>";               // string to show all the details for the facilities 
+
+                    sum07 = sum07 + e.features[i].properties[2007]      // store sum of all the emissions in each year for every facility for line chart
+                    sum08 = sum08 + e.features[i].properties[2008]
+                    sum09 = sum09 + e.features[i].properties[2009]
+                    sum10 = sum10 + e.features[i].properties[2010]
+                    sum11 = sum11 + e.features[i].properties[2011]
+                    sum12 = sum12 + e.features[i].properties[2012]
+                    sum13 = sum13 + e.features[i].properties[2013]
+                    sum14 = sum14 + e.features[i].properties[2014]
+                    sum15 = sum15 + e.features[i].properties[2015]
+                    sum16 = sum16 + e.features[i].properties[2016]
+                    sum17 = sum17 + e.features[i].properties[2017]
+                
+            }
+
+            }
+             // geojson file contains 9 values for long and lat (to make octagon), therefore it needs to be averaged
+            const coorlang = (coordinates[0][0][0] +coordinates[0][1][0] +coordinates[0][2][0] +coordinates[0][3][0])/4; 
+            const coorlat = (coordinates[0][0][1] +coordinates[0][1][1] +coordinates[0][2][1] +coordinates[0][3][1])/4;
+
+            const coor = [coorlang,coorlat]
+                // Ensure that if the map is zoomed out such that multiple
+                // copies of the feature are visible, the popup appears
+                // over the copy being pointed to.
+                while (Math.abs(e.lngLat.lng - coor[0]) > 180) {
+                    coor[0] += e.lngLat.lng > coor[0] ? 360 : -360;
+                }
+
+                new mapboxgl.Popup()
+                    .setLngLat(coor)
+                    .setHTML(('<div id="smallcontainer"></div>')) 
+                    .addTo(map);
+
+                    var get = document.getElementById('smallcontainer');
+
+                        get.innerHTML += string+" "; //add string from above
+                       
+
+                        var margin = {top: 10, right: 30, bottom: 30, left: 50},
+                        width = 360 - margin.left - margin.right,
+                        height = 300 - margin.top - margin.bottom;
+
+                        // make container
+                        var svg = d3.select("#smallcontainer")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform",
+                            "translate(" + margin.left + "," + margin.top + ")");
+
+                        //Data for linechart
+
+                        var data = [
+                                    {date:2007,value: sum07},
+                                    {date:2008,value: sum08}, 
+                                    {date:2009,value: sum09}, 
+                                    {date:2010,value: sum10},
+                                    {date:2011,value: sum11},
+                                    {date:2012,value: sum12},
+                                    {date:2013,value: sum13},
+                                    {date:2014,value: sum14},
+                                    {date:2015,value: sum15},
+                                    {date:2016,value: sum16},
+                                    {date:2017,value: sum17},
+                                ]
+
+                        // Add X axis --> it is a date format
+                        var x = d3.scaleTime()
+                        .domain(d3.extent(data, function(d) {  return new Date(parseInt(d.date),0);}))
+                        .range([ 0, width ]);
+                        svg.append("g")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(d3.axisBottom(x));
+
+                        // Add Y axis
+                        var y = d3.scaleLinear()
+                        .domain([0, d3.max(data, function(d) { return +d.value/1000000; })])
+                        .range([ height, 0 ]);
+                        svg.append("g")
+                        .call(d3.axisLeft(y));
+
+                        // X axis label
+                        svg.append("text")
+                        .attr("text-anchor", "end")
+                        .attr("x", width/2)
+                        .attr("y", height + margin.top + 20)
+                        .text("Year");
+
+                        // Y axis label
+                        svg.append("text")
+                        .attr("text-anchor", "end")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", -margin.left+10)
+                        .attr("x", -margin.top-70)
+                        .text("CO2-Emissions ( Mt/year )")
+                        
+
+                        // Add the line
+                        svg.append("path")
+                        .datum(data)
+                        .attr("fill", "none")
+                        .attr("stroke", "steelblue")
+                        .attr("stroke-width", 1.5)
+                        .attr("d", d3.line()
+                            .x(function(d) { return x(new Date(parseInt(d.date),0)) })
+                            .y(function(d) { return y(d.value/1000000) })
+                            )
+            });
+
+        // Change mouse pointer when it is over clickable entity.
+        map.on('mouseenter', 'cluster', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', 'cluster', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
+
+    // Same popup setup for next two layers
+    //popup for second layer
+    map.on('click', 'nocluster', (e) => {
+            
+            all_features = e.features
+            let description =new Object();
+            string = ""
+            sum07 = sum08 = sum09 = sum10 = sum11 = sum12= sum13 =sum14 =sum15 =sum16= sum17 = 0
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            for ( var i=0; i<all_features.length ;i++){
+                
+                if (e.features[i].properties.Concentration=="")
+                    con = "n/a"
+                else
+                    con = e.features[i].properties.Concentration
+                if (all_features.length==1)
+                    j="&emsp;"
+                else
+                    j=i+1+". "
+                string = string + j + "<b>"+"Name: " +"</b>"+ e.features[i].properties.FacilityName +"<br>"+"<b>"+"&emsp;Category: " 
+                    +"</b>"+ e.features[i].properties.Category +"<br>"+"<b>"+"&emsp;Concentration: " 
+                    +"</b>"+ con+ "<br>"; 
+                sum07 = sum07 + e.features[i].properties[2007]
+                sum08 = sum08 + e.features[i].properties[2008]
+                sum09 = sum09 + e.features[i].properties[2009]
+                sum10 = sum10 + e.features[i].properties[2010]
+                sum11 = sum11 + e.features[i].properties[2011]
+                sum12 = sum12 + e.features[i].properties[2012]
+                sum13 = sum13 + e.features[i].properties[2013]
+                sum14 = sum14 + e.features[i].properties[2014]
+                sum15 = sum15 + e.features[i].properties[2015]
+                sum16 = sum16 + e.features[i].properties[2016]
+                sum17 = sum17 + e.features[i].properties[2017]
+                
+            }
+            
+            const coorlang = (coordinates[0][0][0] +coordinates[0][1][0] +coordinates[0][2][0] +coordinates[0][3][0])/4;
+            const coorlat = (coordinates[0][0][1] +coordinates[0][1][1] +coordinates[0][2][1] +coordinates[0][3][1])/4;
+
+            const coor = [coorlang,coorlat]
+                
+                while (Math.abs(e.lngLat.lng - coor[0]) > 180) {
+                    coor[0] += e.lngLat.lng > coor[0] ? 360 : -360;
+                }
+
+                new mapboxgl.Popup()
+                    .setLngLat(coor)
+                    .setHTML(('<div id="smallcontainer"></div>'))
+                    .addTo(map);
+
+                    var get = document.getElementById('smallcontainer');
+
+                        get.innerHTML += string+" ";
+
+                        var margin = {top: 10, right: 30, bottom: 30, left: 50},
+                        width = 360 - margin.left - margin.right,
+                        height = 300 - margin.top - margin.bottom;
+
+                        var svg = d3.select("#smallcontainer")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform",
+                            "translate(" + margin.left + "," + margin.top + ")");
+
+                        
+                        var data = [
+                                    {date:2007,value: sum07},
+                                    {date:2008,value: sum08}, 
+                                    {date:2009,value: sum09}, 
+                                    {date:2010,value: sum10},
+                                    {date:2011,value: sum11},
+                                    {date:2012,value: sum12},
+                                    {date:2013,value: sum13},
+                                    {date:2014,value: sum14},
+                                    {date:2015,value: sum15},
+                                    {date:2016,value: sum16},
+                                    {date:2017,value: sum17},
+                                ]
+
+                        var x = d3.scaleTime()
+                        .domain(d3.extent(data, function(d) {  return new Date(parseInt(d.date),0);}))
+                        .range([ 0, width ]);
+                        svg.append("g")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(d3.axisBottom(x));
+
+                        var y = d3.scaleLinear()
+                        .domain([0, d3.max(data, function(d) { return +d.value/1000000; })])
+                        .range([ height, 0 ]);
+                        svg.append("g")
+                        .call(d3.axisLeft(y));
+
+                        svg.append("text")
+                        .attr("text-anchor", "end")
+                        .attr("x", width/2)
+                        .attr("y", height + margin.top + 20)
+                        .text("Year");
+
+                        svg.append("text")
+                        .attr("text-anchor", "end")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", -margin.left+10)
+                        .attr("x", -margin.top-70)
+                        .text("CO2-Emissions ( Mt/year )")
+
+                        svg.append("path")
+                        .datum(data)
+                        .attr("fill", "none")
+                        .attr("stroke", "steelblue")
+                        .attr("stroke-width", 1.5)
+                        .attr("d", d3.line()
+                            .x(function(d) { return x(new Date(parseInt(d.date),0)) })
+                            .y(function(d) { return y(d.value/1000000) })
+                            )
+            });
+        map.on('mouseenter', 'nocluster', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'nocluster', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
+        //popup for third layer
+        map.on('click', 'poin', (e) => {
+           
+            all_features = e.features
+            let description =new Object();
+            string = ""
+            sum07 = sum08 = sum09 = sum10 = sum11 = sum12= sum13 =sum14 =sum15 =sum16= sum17 = 0
+
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            for ( var i=0; i<all_features.length ;i++){
+                if (all_features.length==1)
+                    j="&emsp;"
+                else
+                    j=i+1+". "
+                string = string + j + "<b>"+"Name: " +"</b>"+ e.features[i].properties.FacilityName +"<br>"+"<b>"+"&emsp;Category: " 
+                    +"</b>"+ e.features[i].properties.Category +"<br>"+"<b>"+"&emsp;Concentration: " 
+                    +"</b>"+ e.features[i].properties.Concentration+ "<br>"; 
+                sum07 = sum07 + e.features[i].properties[2007]
+                sum08 = sum08 + e.features[i].properties[2008]
+                sum09 = sum09 + e.features[i].properties[2009]
+                sum10 = sum10 + e.features[i].properties[2010]
+                sum11 = sum11 + e.features[i].properties[2011]
+                sum12 = sum12 + e.features[i].properties[2012]
+                sum13 = sum13 + e.features[i].properties[2013]
+                sum14 = sum14 + e.features[i].properties[2014]
+                sum15 = sum15 + e.features[i].properties[2015]
+                sum16 = sum16 + e.features[i].properties[2016]
+                sum17 = sum17 + e.features[i].properties[2017]
+                
+                
+            }
+            
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+
+                new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(('<div id="smallcontainer"></div>'))
+                    .addTo(map);
+
+                    var get = document.getElementById('smallcontainer');
+
+                    get.innerHTML += string+" ";
+                
+                    var margin = {top: 10, right: 30, bottom: 30, left: 50},
+                    width = 380 - margin.left - margin.right,
+                    height = 300 - margin.top - margin.bottom;
+                
+                var svg = d3.select("#smallcontainer")
+                .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                    .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")");
+                
+                
+                var data = [
+                                {date:2007,value: sum07},
+                                {date:2008,value: sum08}, 
+                                {date:2009,value: sum09}, 
+                                {date:2010,value: sum10},
+                                {date:2011,value: sum11},
+                                {date:2012,value: sum12},
+                                {date:2013,value: sum13},
+                                {date:2014,value: sum14},
+                                {date:2015,value: sum15},
+                                {date:2016,value: sum16},
+                                {date:2017,value: sum17},
+                            ]
+
+                    var x = d3.scaleTime()
+                    .domain(d3.extent(data, function(d) {  return new Date(parseInt(d.date),0);}))
+                    .range([ 0, width ]);
+                    svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(x));
+               
+                    var y = d3.scaleLinear()
+                    .domain([0, d3.max(data, function(d) { return +d.value/1000000; })])
+                    .range([ height, 0 ]);
+                    svg.append("g")
+                    .call(d3.axisLeft(y));
+
+                    svg.append("text")
+                        .attr("text-anchor", "end")
+                        .attr("x", width/2)
+                        .attr("y", height + margin.top + 20)
+                        .text("Year");
+
+                    svg.append("text")
+                        .attr("text-anchor", "end")
+                        .attr("transform", "rotate(-90)")
+                        .attr("y", -margin.left+10)
+                        .attr("x", -margin.top-70)
+                        .text("CO2-Emissions ( Mt/year )")
+
+                    svg.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", "steelblue")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d3.line()
+                        .x(function(d) { return x(new Date(parseInt(d.date),0)) })
+                        .y(function(d) { return y(d.value/1000000) })
+                        )
+                
+        });
+
+      
+        map.on('mouseenter', 'poin', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'poin', () => {
+            map.getCanvas().style.cursor = '';
+        });
+       
+    });
+    
+</script>
+
+</body>
+</html>
